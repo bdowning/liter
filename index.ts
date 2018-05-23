@@ -10,22 +10,25 @@ let baseNames = [
     'steradian',
 ];
 
-type UnitName = {
-    [name: string]: number;
-};
-type UnitTerms = number[];
+let baseIndexes: { [name: string]: number } = { };
+baseNames.forEach((name, i) => baseIndexes[name] = i);
+
+type UnitName = { [name: string]: number; };
+type UnitBaseTerms = number[];
+type UnitCustomTerms = { [name: string]: number; };
 type UnitM = [ number, number ];
 
 type IUnit = {
+    terms?: UnitBaseTerms,
+    customTerms?: UnitCustomTerms,
     name?: UnitName,
-    terms?: UnitTerms,
     m?: UnitM,
     absolute?: number,
     mode?: string,
 };
 
 
-let zeroTerm: UnitTerms = baseNames.map(_ => 0);
+let zeroTerm: UnitBaseTerms = baseNames.map(_ => 0);
 
 export function dotM2(m2: UnitM, m1: UnitM): UnitM {
     let [ a1, b1 ] = m1, [ a2, b2 ] = m2;
@@ -49,6 +52,23 @@ function nameCombine(n1: UnitName, n2: UnitName) {
     return names;
 }
 
+function customTermsCombine(t1?: UnitCustomTerms, t2?: UnitCustomTerms) {
+    let customTerms: UnitCustomTerms | undefined = undefined;
+    if (!t1)
+        return t2;
+    if (!t2)
+        return t1;
+    for (let t of Object.keys(t1).concat(Object.keys(t2))) {
+        let term = (t1[t] || 0) + (t2[t] || 0);
+        if (term) {
+            if (customTerms == null)
+                customTerms = { };
+            customTerms[t] = term;
+        }
+    }
+    return customTerms;
+}
+
 function offsetPow(offset: number, absolute: number) {
     // console.log('offsetPow', offset, absolute, Math.sign(absolute) * (offset / Math.abs(absolute))**Math.abs(absolute));
     return Math.sign(absolute) * (offset / Math.abs(absolute))**Math.abs(absolute);
@@ -57,7 +77,8 @@ function offsetPow(offset: number, absolute: number) {
 
 class Unit {
     constructor(
-        public terms: number[],
+        public terms: UnitBaseTerms,
+        public customTerms?: UnitCustomTerms,
         public name: UnitName = { },
         public m: UnitM = [ 1, 0 ],
         public absolute: number = 0,
@@ -68,6 +89,7 @@ class Unit {
     set(proto: IUnit) {
         return new Unit(
             proto.terms || this.terms,
+            proto.customTerms || this.customTerms,
             proto.name || this.name,
             proto.m || this.m,
             proto.absolute != null ? proto.absolute : this.absolute,
@@ -75,9 +97,25 @@ class Unit {
         );
     }
 
+    static base(name: string) {
+        let baseIndex = baseIndexes[name];
+        let terms = zeroTerm;
+        if (baseIndex != null) {
+            terms = [ ...terms ];
+            terms[baseIndex] = 1;
+        }
+        let customTerms = baseIndex == null ? { [name]: 1 } : undefined;
+        return new Unit(
+            terms,
+            customTerms,
+            { [name]: 1 },
+        );
+    }
+
     static one(m0 = 1, m1 = 0) {
         return new Unit(
             zeroTerm,
+            undefined,
             { },
             [ m0, m1 ],
         );
@@ -93,6 +131,13 @@ class Unit {
                 o.push(baseNames[i]);
             else if (terms[i] !== 0)
                 o.push(`${baseNames[i]}^${terms[i]}`);
+        }
+        if (this.customTerms) {
+            for (let term in this.customTerms)
+                if (this.customTerms[term] === 1)
+                    o.push(this.customTerms[term])
+                else if (this.customTerms[term] !== 0)
+                    o.push(`${term}^${this.customTerms[term]}`);
         }
         return o.join(' ');
     }
@@ -121,6 +166,17 @@ class Unit {
             if (this.terms[i] !== rhs.terms[i])
                 return false;
         }
+        if (this.customTerms) {
+            if (!rhs.customTerms)
+                return false;
+            for (let t of Object.keys(this.customTerms).concat(Object.keys(rhs.customTerms))) {
+                if ((this.customTerms[t] || 0) !== (rhs.customTerms[t] || 0))
+                    return false;
+            }
+        } else {
+            if (rhs.customTerms)
+                return false;
+        }
         return true;
     }
 
@@ -133,14 +189,15 @@ class Unit {
         let terms = [ ];
         for (let i = 0; i < baseNames.length; ++i)
             terms[i] = this.terms[i] + rhs.terms[i];
-        if (terms.every(i => i == 0)) {
-            mode = 'U/U';
-            terms = this.terms;
-        }
+        // if (terms.every(i => i == 0)) {
+        //     mode = 'U/U';
+        //     terms = this.terms;
+        // }
         let absolute = this.absolute + rhs.absolute;
         //assert(this.m[1] == 0 && rhs.m[1] == 0);
         let u = new Unit(
             terms,
+            customTermsCombine(this.customTerms, rhs.customTerms),
             nameCombine(this.name, rhs.name),
             [ this.m[0] * rhs.m[0], this.m[1] + rhs.m[1] ],
             absolute,
@@ -164,13 +221,20 @@ class Unit {
     inv() {
         let terms = [ ];
         let name: UnitName = { };
+        let customTerms: UnitCustomTerms | undefined;
         for (let i = 0; i < baseNames.length; ++i)
             terms[i] = -this.terms[i] || 0;
         for (let k of Object.keys(this.name))
             name[k] = -this.name[k];
+        if (this.customTerms) {
+            customTerms = { };
+            for (let t in this.customTerms)
+                customTerms[t] = -this.customTerms[t];
+        }
         //assert(this.m[1] == 0);
         return new Unit(
             terms,
+            customTerms,
             name,
             [ 1 / this.m[0], -this.m[1] ],
             -this.absolute,
@@ -220,7 +284,7 @@ class Unit {
     print() {
         console.log('This ', this.nameFormat());
         console.log('  base: ', this.baseFormat());
-        console.log('  terms:', this.terms);
+        console.log('  terms:', this.terms, this.customTerms);
         console.log('  m:    ', this.m);
     }
 
@@ -238,11 +302,7 @@ for (let i = 0; i < baseNames.length; ++i) {
     let terms = [];
     for (let j = 0; j < baseNames.length; ++j)
         terms[j] = (j === i) ? 1 : 0;
-    u[baseNames[i]] = new Unit(
-        terms,
-        { [baseNames[i]]: 1 },
-        [ 1, 0 ],
-    );
+    u[baseNames[i]] = Unit.base(baseNames[i]);
 }
 
 u.deltaKelvin = u.kelvin;
