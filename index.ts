@@ -27,6 +27,21 @@ type IUnit = {
 
 let zeroTerm: UnitTerms = baseNames.map(_ => 0);
 
+export function dotM2(m2: UnitM, m1: UnitM): UnitM {
+    let [ a1, b1 ] = m1, [ a2, b2 ] = m2;
+    console.log('dotM2', m2, '.', m1, '->', [ a1 * a2, a2 * b1 + b2 ]);
+    return [ a1 * a2, a2 * b1 + b2 ];
+}
+
+export function dotM(mn: UnitM, ...m: UnitM[]) {
+    console.log('dotM', mn, m);
+    return m.reduce((l, r) => dotM2(l, r), mn);
+}
+
+export function applyM(m: UnitM, val: number) {
+    return val * m[0] + m[1];
+}
+
 function nameCombine(n1: UnitName, n2: UnitName) {
     let names = { ...n1 };
     for (let k of Object.keys(n2))
@@ -42,11 +57,11 @@ function offsetPow(offset: number, absolute: number) {
 
 class Unit {
     constructor(
-        private terms: number[],
-        private name: UnitName = { },
-        private m: UnitM = [ 1, 0 ],
-        private absolute: number = 0,
-        private mode: string = 'normal',
+        public terms: number[],
+        public name: UnitName = { },
+        public m: UnitM = [ 1, 0 ],
+        public absolute: number = 0,
+        public mode: string = 'normal',
     ) {
     }
 
