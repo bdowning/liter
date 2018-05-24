@@ -23,7 +23,6 @@ type IUnit = {
     customTerms?: UnitCustomTerms,
     name?: UnitName,
     m?: UnitM,
-    absolute?: number,
     mode?: string,
 };
 
@@ -69,11 +68,6 @@ function customTermsCombine(t1?: UnitCustomTerms, t2?: UnitCustomTerms) {
     return customTerms;
 }
 
-function offsetPow(offset: number, absolute: number) {
-    // console.log('offsetPow', offset, absolute, Math.sign(absolute) * (offset / Math.abs(absolute))**Math.abs(absolute));
-    return Math.sign(absolute) * (offset / Math.abs(absolute))**Math.abs(absolute);
-}
-
 
 class Unit {
     constructor(
@@ -81,7 +75,6 @@ class Unit {
         public customTerms?: UnitCustomTerms,
         public name: UnitName = { },
         public m: UnitM = [ 1, 0 ],
-        public absolute: number = 0,
         public mode: string = 'normal',
     ) {
     }
@@ -92,7 +85,6 @@ class Unit {
             proto.customTerms || this.customTerms,
             proto.name || this.name,
             proto.m || this.m,
-            proto.absolute != null ? proto.absolute : this.absolute,
             proto.mode || this.mode,
         );
     }
@@ -143,19 +135,13 @@ class Unit {
     }
 
     nameFormat() {
-        let { name, m, absolute } = this;
+        let { name, m } = this;
         let o = [ ];
         for (let k of Object.keys(name)) {
             if (name[k] === 1)
                 o.push(k);
             else if (typeof(name[k]) === 'number' && name[k] !== 0)
                 o.push(`${k}^${name[k].toString()}`);
-        }
-        if (m[1] !== 0) {
-            if (absolute)
-                o.push('[A]');
-            else
-                o.push('[R]');
         }
 
         return o.join(' ');
@@ -185,6 +171,8 @@ class Unit {
     }
 
     mul2(rhs: Unit): [ Unit, UnitM, UnitM, UnitM ] {
+        if (this.m[1] !== 0 || rhs.m[1] !== 0)
+            throw new Error(`Can't multiply offset units`);
         let mode = this.mode;
         let terms = [ ];
         for (let i = 0; i < baseNames.length; ++i)
@@ -193,21 +181,19 @@ class Unit {
         //     mode = 'U/U';
         //     terms = this.terms;
         // }
-        let absolute = this.absolute + rhs.absolute;
         //assert(this.m[1] == 0 && rhs.m[1] == 0);
         let u = new Unit(
             terms,
             customTermsCombine(this.customTerms, rhs.customTerms),
             nameCombine(this.name, rhs.name),
             [ this.m[0] * rhs.m[0], this.m[1] + rhs.m[1] ],
-            absolute,
             mode,
         );
         // console.log(this, rhs);
         return [ u,
-                 [ 1, -offsetPow(this.m[1] + rhs.m[1], absolute) ],
-                 [ 1, offsetPow(this.m[1], this.absolute) ],
-                 [ 1, offsetPow(rhs.m[1], rhs.absolute) ] ];
+                 [ 1, -(this.m[1] + rhs.m[1]) ],
+                 [ 1, this.m[1] ],
+                 [ 1, rhs.m[1] ] ];
     }
 
     mul(...rest: Unit[]) {
@@ -219,6 +205,8 @@ class Unit {
     }
 
     inv() {
+        if (this.m[1] !== 0)
+            throw new Error(`Can't invert offset units`);
         let terms = [ ];
         let name: UnitName = { };
         let customTerms: UnitCustomTerms | undefined;
@@ -237,44 +225,52 @@ class Unit {
             customTerms,
             name,
             [ 1 / this.m[0], -this.m[1] ],
-            -this.absolute,
         );
     }
 
-    add(rhs: Unit, forceAbs?: number): [ Unit, UnitM, UnitM, UnitM ] {
+    add(rhs: Unit, convert = false): [ Unit, UnitM, UnitM, UnitM ] {
         if (!this.sameTerms(rhs))
             throw new Error(`Can not add <${rhs.nameFormat()}> to <${this.nameFormat()}>`);
+        if (!convert && this.m[1] !== 0 && rhs.m[1] !== 0)
+            throw new Error(`Can't add offset units`);
 
-        let scale = rhs.m[0] / this.m[0];
-        let absolute = this.absolute ? this.absolute : rhs.absolute;
-        console.log('this', this, 'rhs', rhs);
-        console.log('scale', scale, 'absolute', absolute, 'm[1]', this.m[1], rhs.m[1]);
-        if (forceAbs != null)
-            absolute = forceAbs;
-        let u = this.set({ absolute });
+        let lhs: Unit = this;
+        let swap = false;
+        if (lhs.m[1] === 0 && rhs.m[1] !== 0) {
+            lhs = rhs;
+            rhs = this;
+            swap = true;
+        }
+        let scale = rhs.m[0] / lhs.m[0];
+        console.log('lhs', lhs, 'rhs', rhs);
+        console.log('scale', scale, 'm[1]', lhs.m[1], rhs.m[1]);
 
-        console.log([ u,
-                 [ 1, -offsetPow(this.m[1], absolute) ],
-                 [ 1, offsetPow(this.m[1], this.absolute) ],
-                 [ scale, scale * offsetPow(rhs.m[1], rhs.absolute) ] ]);
-        return [ u,
-                 [ 1, -offsetPow(this.m[1], absolute) ],
-                 [ 1, offsetPow(this.m[1], this.absolute) ],
-                 [ scale, scale * offsetPow(rhs.m[1], rhs.absolute) ] ];
+        let lm: UnitM = [ 1, lhs.m[1] ];
+        let rm: UnitM = [ scale, scale * rhs.m[1] ];
+        return [ lhs,
+                 [ 1, -lhs.m[1] ],
+                 swap ? rm : lm,
+                 swap ? lm : rm ];
+    }
+
+    delta(): Unit {
+        let name: UnitName = { };
+        for (let n in this.name)
+            name[`delta_${n}`] = this.name[n];
+        return this.set({ name, m: [ this.m[0], 0 ] });
     }
 
     sub(rhs: Unit): [ Unit, UnitM, UnitM, UnitM ] {
         if (!this.sameTerms(rhs))
             throw new Error(`Can not subtract <${rhs.nameFormat()}> from <${this.nameFormat()}>`);
         let scale = rhs.m[0] / this.m[0];
-        let absolute = this.absolute ? this.absolute : rhs.absolute;
-        if (this.absolute && rhs.absolute)
-            absolute = 0;
-        let u = this.set({ absolute });
+        if (this.m[1] === 0 && rhs.m[1] !== 0)
+            throw new Error(`Can't subtract offset from non-offset unit`);
+        let u = (this.m[1] !== 0 && rhs.m[1] !== 0) ? this.delta() : this;
         return [ u,
-                 [ 1, -offsetPow(this.m[1], absolute) ],
-                 [ 1, offsetPow(this.m[1], this.absolute) ],
-                 [ scale, scale * offsetPow(rhs.m[1], rhs.absolute) ] ];
+                 [ 1, -u.m[1] ],
+                 [ 1, this.m[1] ],
+                 [ scale, scale * rhs.m[1] ] ];
     }
 
     rename(name: string) {
@@ -305,9 +301,6 @@ for (let i = 0; i < baseNames.length; ++i) {
     u[baseNames[i]] = Unit.base(baseNames[i]);
 }
 
-u.deltaKelvin = u.kelvin;
-u.kelvin = u.deltaKelvin.set({ absolute: 1 });
-
 u.one = Unit.one(1);
 
 u.hertz = u.one.div(u.second).rename('hertz');
@@ -332,6 +325,7 @@ u.mPerSS = u.mPerS.div(u.second);
 
 u.gram = u.kilogram.mul(Unit.one(1/1000)).rename('gram');
 u.centimeter = u.meter.mul(Unit.one(1/100)).rename('centimeter');
+u.millimeter = u.meter.mul(Unit.one(1/1000)).rename('millimeter');
 u.kilometer = u.meter.mul(Unit.one(1000)).rename('kilometer');
 u.inch = u.centimeter.mul(Unit.one(2.54)).rename('inch');
 u.foot = u.inch.mul(Unit.one(12)).rename('foot');
@@ -372,15 +366,8 @@ u.PSI = u.poundForce.div(u.inch, u.inch).rename('PSI');
 u.degreeC = u.kelvin.set({ m: [ 1, 273.15 ] }).rename('degreeC');
 u.degreeF = u.kelvin.set({ m: [ 5/9, 459.67 ] }).rename('degreeF');
 u.degreeR = u.kelvin.set({ m: [ 5/9, 0 ] }).rename('degreeR');
-u.deltaC = u.degreeC.set({ absolute: 0 });
-u.deltaF = u.degreeF.set({ absolute: 0 });
-
-u['°C'] = u.degreeC.rename('°C');
-u['°F'] = u.degreeF.rename('°F');
-u['Δ°C'] = u.deltaC.rename('Δ°C');
-u['Δ°F'] = u.deltaF.rename('Δ°F');
-
-console.log(u);
+u.delta_degreeC = u.degreeC.delta();
+u.delta_degreeF = u.degreeF.delta();
 
 for (let k of Object.keys(u)) {
     console.log(u[k]);

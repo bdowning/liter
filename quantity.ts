@@ -10,9 +10,9 @@ export class Q {
     add(rhs: Q): Q {
         let lhs: Q = this;
         if (lhs.u.isDimensionless())
-            lhs = new Q(lhs.n, rhs.u.set({ absolute: 0 }));
+            lhs = new Q(lhs.n, rhs.u);
         if (rhs.u.isDimensionless())
-            rhs = new Q(rhs.n, lhs.u.set({ absolute: 0 }));
+            rhs = new Q(rhs.n, lhs.u);
         console.log('Q.add', lhs.u, rhs.u);
         let [ u, om, lm, rm ] = lhs.u.add(rhs.u);
         console.log('Q.add', [ om, lm, rm ], this.n, this.u, rhs.n, rhs.u);
@@ -22,9 +22,9 @@ export class Q {
     sub(rhs: Q): Q {
         let lhs: Q = this;
         if (lhs.u.isDimensionless())
-            lhs = new Q(lhs.n, rhs.u.set({ absolute: 0 }));
+            lhs = new Q(lhs.n, rhs.u);
         if (rhs.u.isDimensionless())
-            rhs = new Q(rhs.n, lhs.u.set({ absolute: 0 }));
+            rhs = new Q(rhs.n, lhs.u);
         let [ u, om, lm, rm ] = lhs.u.sub(rhs.u);
         // console.log('Q.sub', [ om, lm, rm ], this.n, this.u, rhs.n, rhs.u);
         return new Q(applyM(om, applyM(lm, lhs.n) - applyM(rm, rhs.n)), u);
@@ -60,7 +60,8 @@ export class Q {
     }
 
     convert(to: Unit) {
-        let [ u, om, lm, rm ] = to.add(this.u, to.absolute);
+        console.log('what', to);
+        let [ u, om, lm, rm ] = to.add(this.u, true);
         return new Q(applyM(om, applyM(rm, this.n)), u);
     }
 
@@ -73,12 +74,6 @@ export class Q {
         let name = this.u.nameFormat();
         if (name)
             out.push(name);
-        if (this.u.m[1] !== 0) {
-            if (this.u.absolute)
-                out.push('[A]');
-            else
-                out.push('[R]');
-        }
         return '<'+out.join(' ')+'>';
     }
 }
@@ -201,10 +196,10 @@ let u = units;
 
 // console.log(q(1).div(q.degreeC));
 
-console.log(q(0, u.degreeC), q(0, u.deltaC));
-console.log(q(0, u.deltaC).add(q(2, u.degreeF)));
-console.log(q(2, u.degreeF).add(q(0, u.deltaC)));
-console.log(q(0, u.degreeC).convert(u.degreeF));
-console.log(q(0, u.degreeF).convert(u.degreeC));
+// console.log(q(0, u.degreeC), q(0, u.deltaC));
+// console.log(q(0, u.deltaC).add(q(2, u.degreeF)));
+// console.log(q(2, u.degreeF).add(q(0, u.deltaC)));
+// console.log(q(0, u.degreeC).convert(u.degreeF));
+// console.log(q(0, u.degreeF).convert(u.degreeC));
 
 // console.log(q(q(47.5, u.microstrain));

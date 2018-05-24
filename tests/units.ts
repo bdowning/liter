@@ -22,8 +22,8 @@ describe('Unit basics', () => {
             mode: 'normal',
             name: { test: 1 },
             terms: [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ],
-            absolute: 0,
-            m: [ 1, 0 ],
+            customTerms: { test: 1 },
+            m: <[ number, number ]>[ 1, 0 ],
         };
         let u = Unit.one().set(props);
         expect(u).to.deep.equal(props);
@@ -59,7 +59,7 @@ describe('Unit basics', () => {
     });
 
     it('should allow adding same unit', () => {
-        expect(() => units.meter.add(units.meter)).to.not.throw(Unit.Error);
+        expect(() => units.meter.add(units.meter)).to.not.throw(Error);
     });
 
     it('should not allow adding different unit', () => {
