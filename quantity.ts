@@ -1,4 +1,5 @@
-import { Unit, units, applyM } from './index';
+import { Unit, units } from './unit';
+import { applyM } from './utils';
 
 export class Q {
     constructor(
