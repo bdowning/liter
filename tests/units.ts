@@ -1,10 +1,10 @@
-import { Unit, units } from '../index';
+import { Unit, IUnit, baseUnits as units } from '../unit';
 import { expect } from 'chai';
 import 'mocha';
 
 let epsilon = 1e-9;
 
-let baseUnits = [
+let baseUnitNames = [
     'meter',
     'kilogram',
     'second',
@@ -18,21 +18,25 @@ let baseUnits = [
 
 describe('Unit basics', () => {
     it('should be creatable', () => {
-        let props = {
+        let props: IUnit = {
             mode: 'normal',
             name: { test: 1 },
             terms: [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ],
             customTerms: { test: 1 },
-            m: <[ number, number ]>[ 1, 0 ],
+            m: [ 1, 0 ],
         };
         let u = Unit.one().set(props);
-        expect(u).to.deep.equal(props);
+        expect(u.mode).to.equal(props.mode);
+        expect(u.name).to.deep.equal(props.name);
+        expect(u.terms).to.deep.equal(props.terms);
+        expect(u.customTerms).to.deep.equal(props.customTerms);
+        expect(u.m).to.deep.equal(props.m);
     });
 
     it('should have base units pre-populated', () => {
         let term = 0;
         let terms = [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
-        for (let base of baseUnits) {
+        for (let base of baseUnitNames) {
             let u = units[base];
             expect(u).to.exist;
             expect(u.nameFormat()).to.equal(base);
@@ -42,6 +46,15 @@ describe('Unit basics', () => {
             terms[term++] = 0;
             expect(u.m).to.deep.equal([ 1, 0 ]);
         }
+    });
+
+    describe('Unit.one()', () => {
+        it('should create a unit with appropriate m', () => {
+            let u = Unit.one(42);
+            expect(u.m).to.deep.equal([ 42, 0 ]);
+            u = Unit.one(5/9, 32);
+            expect(u.m).to.deep.equal([ 5/9, 32 ]);
+        });
     });
 
     it('should add terms on multiplication', () => {
@@ -76,6 +89,14 @@ describe('Unit basics', () => {
             expect(m[0]).to.be.closeTo(1, epsilon);
             expect(m[1]).to.be.closeTo(0, epsilon);
         }
+    });
+
+    describe('Custom bases', () => {
+        it('should have correct name', () => {
+            let u = Unit.base('frog');
+            expect(u.nameFormat()).to.equal('frog');
+            expect(u.baseFormat()).to.equal('frog');
+        });
     });
 
 });

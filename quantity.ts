@@ -1,5 +1,6 @@
-import { Unit, units } from './unit';
+import { Unit } from './unit';
 import { applyM } from './utils';
+import { units } from './units';
 
 export class Q {
     constructor(

@@ -12,5 +12,10 @@
   "dependencies": {
   },
   "main": "out/index.js",
-  "types": "out/index.d.ts"
+  "types": "out/index.d.ts",
+  "scripts": {
+    "compile": "rm -rf lib/ && tsc",
+    "test": "npm run compile && mocha --require source-map-support/register out/tests",
+    "prepublish": "npm run compile"
+  }
 }

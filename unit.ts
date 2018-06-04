@@ -112,7 +112,7 @@ export class Unit {
         if (this.customTerms) {
             for (let term in this.customTerms)
                 if (this.customTerms[term] === 1)
-                    o.push(this.customTerms[term])
+                    o.push(term)
                 else if (this.customTerms[term] !== 0)
                     o.push(`${term}^${this.customTerms[term]}`);
         }
