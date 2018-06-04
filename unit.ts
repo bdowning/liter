@@ -132,15 +132,20 @@ export class Unit {
         return o.join(' ');
     }
 
+    private cachedTermsKey?: string;
+
     termsKey() {
-        let key: (number | string)[] = [ ...this.terms ];
-        if (this.customTerms) {
-            for (let term of Object.keys(this.customTerms).sort()) {
-                key.push(term);
-                key.push(this.customTerms[term]);
+        if (!this.cachedTermsKey) {
+            let key: (number | string)[] = [ ...this.terms ];
+            if (this.customTerms) {
+                for (let term of Object.keys(this.customTerms).sort()) {
+                    key.push(term);
+                    key.push(this.customTerms[term]);
+                }
             }
+            this.cachedTermsKey = JSON.stringify(key);
         }
-        return JSON.stringify(key);
+        return this.cachedTermsKey;
     }
 
     sameTerms(rhs: Unit) {
