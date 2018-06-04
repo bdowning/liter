@@ -132,6 +132,17 @@ export class Unit {
         return o.join(' ');
     }
 
+    termsKey() {
+        let key: (number | string)[] = [ ...this.terms ];
+        if (this.customTerms) {
+            for (let term of Object.keys(this.customTerms).sort()) {
+                key.push(term);
+                key.push(this.customTerms[term]);
+            }
+        }
+        return JSON.stringify(key);
+    }
+
     sameTerms(rhs: Unit) {
         for (let i = 0; i < baseNames.length; ++i) {
             if (this.terms[i] !== rhs.terms[i])
