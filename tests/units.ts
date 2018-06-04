@@ -97,6 +97,10 @@ describe('Unit basics', () => {
             expect(u.nameFormat()).to.equal('frog');
             expect(u.baseFormat()).to.equal('frog');
         });
+
+        it('should return false from isDimensionless()', () => {
+            expect(Unit.base('frog').isDimensionless()).to.be.false;
+        });
     });
 
 });

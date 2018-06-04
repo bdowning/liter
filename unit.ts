@@ -168,7 +168,7 @@ export class Unit {
     }
 
     isDimensionless() {
-        return this.terms.every(t => t === 0);
+        return !this.customTerms && this.terms.every(t => t === 0);
     }
 
     mul2(rhs: Unit): [ Unit, UnitM, UnitM, UnitM ] {
