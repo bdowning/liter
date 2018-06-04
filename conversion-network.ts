@@ -31,22 +31,29 @@ export class UnitConversionNetwork {
             return this.rates;
         this.rates = { };
         let rates = this.rates;
-        let visited: { [x: string]: boolean } = { };
-        let walk = (fromK: string, leftK: string, pathRate: Unit) => {
+
+        let walk = (
+            fromK: string,
+            leftK: string,
+            pathRate: Unit,
+            visited: { [x: string]: boolean },
+        ) => {
             for (let rightK in this.edges[leftK]) {
-                if (rightK === fromK || visited[fromK + rightK])
+                if (rightK === fromK || visited[rightK])
                     continue;
-                visited[fromK + rightK] = true;
+                visited[rightK] = true;
                 let { leftRate, rightRate } = this.edges[leftK][rightK];
                 let rate = pathRate.mul(leftRate.div(rightRate));
                 if (rates[rate.termsKey()] != null)
                     throw new Error('duplicate rate');
                 rates[rate.termsKey()] = rate;
-                walk(fromK, rightK, rate);
+                walk(fromK, rightK, rate, visited);
             }
         };
+
         for (let fromK in this.edges)
-            walk(fromK, fromK, Unit.one());
+            walk(fromK, fromK, Unit.one(), { });
+
         return rates;
     }
 
