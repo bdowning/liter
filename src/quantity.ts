@@ -15,9 +15,9 @@ export class Q {
             lhs = new Q(lhs.n, rhs.u);
         if (rhs.u.isDimensionless())
             rhs = new Q(rhs.n, lhs.u);
-        console.log('Q.add', lhs.u, rhs.u);
+        // console.log('Q.add', lhs.u, rhs.u);
         let [ u, om, lm, rm ] = lhs.u.add(rhs.u);
-        console.log('Q.add', [ om, lm, rm ], this.n, this.u, rhs.n, rhs.u);
+        // console.log('Q.add', [ om, lm, rm ], this.n, this.u, rhs.n, rhs.u);
         return new Q(applyM(om, applyM(lm, lhs.n) + applyM(rm, rhs.n)), u);
     }
 
@@ -62,7 +62,7 @@ export class Q {
     }
 
     convert(to: Unit) {
-        console.log('what', to);
+        // console.log('what', to);
         let [ u, om, lm, rm ] = to.add(this.u, true);
         return new Q(applyM(om, applyM(rm, this.n)), u);
     }

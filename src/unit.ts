@@ -243,8 +243,8 @@ export class Unit {
             swap = true;
         }
         let scale = rhs.m[0] / lhs.m[0];
-        console.log('lhs', lhs, 'rhs', rhs);
-        console.log('scale', scale, 'm[1]', lhs.m[1], rhs.m[1]);
+        // console.log('lhs', lhs, 'rhs', rhs);
+        // console.log('scale', scale, 'm[1]', lhs.m[1], rhs.m[1]);
 
         let lm: UnitM = [ 1, lhs.m[1] ];
         let rm: UnitM = [ scale, scale * rhs.m[1] ];
