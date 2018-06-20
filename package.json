@@ -1,6 +1,22 @@
 {
   "name": "liter",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "description": "A unit library",
+  "author": "Brian Downing",
+  "license": "MIT",
+  "keywords": [
+    "unit",
+    "conversion",
+    "physical",
+    "si"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bdowning/liter"
+  },
+  "bugs": {
+    "url": "https://github.com/bdowning/liter/issues"
+  },
   "devDependencies": {
     "@types/chai": "^4.1.3",
     "@types/mocha": "^5.2.0",
