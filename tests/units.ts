@@ -1,4 +1,4 @@
-import { Unit, IUnit, baseUnits as units } from '../unit';
+import { Unit, IUnit, baseUnits as units } from '../index';
 import { expect } from 'chai';
 import 'mocha';
 

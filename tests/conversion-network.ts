@@ -1,6 +1,6 @@
-import { Unit, units } from '../index';
-import { Q, q } from '../quantity';
-import { UnitConversionNetwork } from '../conversion-network';
+import { Unit, units,
+         Q, q,
+         UnitConversionNetwork } from '../index';
 import { expect } from 'chai';
 import 'mocha';
 
