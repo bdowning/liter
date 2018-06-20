@@ -15,7 +15,7 @@
   "types": "out/index.d.ts",
   "scripts": {
     "compile": "rm -rf lib/ && tsc",
-    "test": "npm run compile && mocha --require source-map-support/register out/tests",
-    "prepublish": "npm run compile"
+    "test": "yarn run compile && mocha --require source-map-support/register lib/tests",
+    "prepublish": "yarn run compile"
   }
 }
