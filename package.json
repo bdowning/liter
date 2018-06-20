@@ -1,5 +1,5 @@
 {
-  "name": "units",
+  "name": "liter",
   "version": "0.0.1",
   "devDependencies": {
     "@types/chai": "^4.1.3",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
   },
-  "main": "out/index.js",
-  "types": "out/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "compile": "rm -rf lib/ && tsc",
     "test": "yarn run compile && mocha --require source-map-support/register lib/tests",
