@@ -16,6 +16,6 @@
   "scripts": {
     "compile": "rm -rf lib/ && tsc",
     "test": "yarn run compile && mocha --require source-map-support/register lib/tests",
-    "prepublish": "yarn run compile"
+    "prepare": "yarn run compile"
   }
 }
