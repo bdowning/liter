@@ -28,6 +28,7 @@ describe('Conversion network', () => {
         net.addRate(42, Unit.base('thing'), 12, units.kilogram);
         net.addRate(1, Unit.base('stuff'), 9, units.pound);
         let u = net.getConversionUnit(Unit.base('thing'), Unit.base('stuff'));
+        if (!u) throw new Error('no conversion');
         expect(u.termsKey()).to.equal('[0,0,0,0,0,0,0,0,0,"stuff",1,"thing",-1]');
         let c = q(3.5, Unit.base('thing')).mul(q(1, u)).convert(Unit.base('stuff'));
         expect(c.n).to.be.closeTo(1/4.082328, epsilon);
@@ -49,12 +50,12 @@ describe('Conversion network', () => {
         let net = new UnitConversionNetwork();
         net.addRate(42, Unit.base('thing'), 12, units.kilogram);
         net.addRate(1, Unit.base('stuff'), 9, units.ampere);
-        expect(() => net.getConversionUnit(Unit.base('thing'), Unit.base('stuff'))).to.throw();
-        expect(() => net.getConversionUnit(Unit.base('stuff'), Unit.base('thing'))).to.throw();
-        expect(() => net.getConversionUnit(units.kilogram, Unit.base('thing'))).to.not.throw();
-        expect(() => net.getConversionUnit(units.kilogram, Unit.base('stuff'))).to.throw();
-        expect(() => net.getConversionUnit(Unit.base('thing'), units.kilogram)).to.not.throw();
-        expect(() => net.getConversionUnit(Unit.base('stuff'), units.kilogram)).to.throw();
+        expect(net.getConversionUnit(Unit.base('thing'), Unit.base('stuff'))).to.not.exist;
+        expect(net.getConversionUnit(Unit.base('stuff'), Unit.base('thing'))).to.not.exist;
+        expect(net.getConversionUnit(units.kilogram, Unit.base('thing'))).to.exist;
+        expect(net.getConversionUnit(units.kilogram, Unit.base('stuff'))).to.not.exist;
+        expect(net.getConversionUnit(Unit.base('thing'), units.kilogram)).to.exist;
+        expect(net.getConversionUnit(Unit.base('stuff'), units.kilogram)).to.not.exist;
     });
 });
 

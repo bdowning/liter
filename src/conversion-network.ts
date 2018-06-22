@@ -60,9 +60,6 @@ export class UnitConversionNetwork {
     getConversionUnit(from: Unit, to: Unit) {
         let rates = this.computeRates();
         let rateU = to.div(from);
-        let rate = rates[rateU.termsKey()];
-        if (!rate)
-            throw new Error('no conversion');
-        return rate;
+        return rates[rateU.termsKey()];
     }
 };
